@@ -5,41 +5,45 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
-import static android.content.ContentValues.TAG;
 
-/**
- * Created by Administrator on 2018/1/23.
- */
+//Created by Administrator on 2018/1/23.
 
 public class CroppingFrame extends View {
 
-    private static final int DEAFULT_SIZE = 500;
-    private float oldX;
-    private float oldY;
-    private int location = 0;
-    private static final int LOCATION_TOP = 100;
-    private static final int LOCATION_RIGHTTOP = 101;
-    private static final int LOCATION_RIGHT = 102;
-    private static final int LOCATION_RIGHTBOTTOM = 103;
-    private static final int LOCATION_BOTTOM = 104;
-    private static final int LOCATION_LEFTBOTTOM = 105;
-    private static final int LOCATION_LEFT = 106;
-    private static final int LOCATION_LEFTTOP = 107;
-    private static final int LOCATION_INSIDE = 108;
-    private Context mContext;
-    private static final int MODE_SINGLEPOINT = 200;
-    private static final int MODE_DOUBLEPOINT = 201;
-    private static final int MODE_READY = 202;
-    private int mode = MODE_READY;
-    private float oldLength;
-    private Paint paint = new Paint();
+    private static final int DEAFULT_SIZE = 500;//方形框默认边长
+    private int left;//方形框左边位置
+    private int right;//方形框右边位置
+    private int top ;//方形框顶边位置
+    private int bottom ;//方形框底边位置
+    private float preX;//上一个触摸点
+    private float preY;//上一个触摸点
+    private int location = 0;//记录触摸点初始位置
+    private Context mContext;//全局上下文
+    private static final int LOCATION_TOP = 100;//标志：触摸点位置在方形框顶边
+    private static final int LOCATION_RIGHTTOP = 101;//标志：触摸点位置在方形框右上角
+    private static final int LOCATION_RIGHT = 102;//标志：触摸点位置在方形框右边
+    private static final int LOCATION_RIGHTBOTTOM = 103;//标志：触摸点位置在方形框右下角
+    private static final int LOCATION_BOTTOM = 104;//标志：触摸点位置在方形框底边
+    private static final int LOCATION_LEFTBOTTOM = 105;//标志：触摸点位置在方形框左下角
+    private static final int LOCATION_LEFT = 106;//标志：触摸点位置在方形框左边
+    private static final int LOCATION_LEFTTOP = 107;//标志：触摸点位置在方形框左上角
+    private static final int LOCATION_INSIDE = 108;//标志：触摸点位置在方形框内部
+    private static final int MODE_SINGLEPOINT = 200;//标志：触摸模式为单指
+    private static final int MODE_DOUBLEPOINT = 201;//标志：触摸模式为双指
+    private static final int MODE_NONE = 202;//标志：触摸模式为无
+    private int mode = MODE_NONE;//默认为无
+    private float preLength;//记录缩放时上一个两点间距
+    private Paint paintText = new Paint();//文本画笔，全局生成，避免重复实例化造成onDraw时间过长
+    private boolean isMeasured = false;//标志位：只在第一次测量时设置方形框位置和边长
+    private Path path;//同文本画笔，用于把半透明区域限制在方形框外面
 
     public CroppingFrame(Context context) {
         this(context, null);
@@ -52,136 +56,137 @@ public class CroppingFrame extends View {
     public CroppingFrame(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mContext = context;
+        //绘制透明预览框
+        paintText.setColor(Color.WHITE);
+        paintText.setTextSize(50);
+        paintText.setTextAlign(Paint.Align.CENTER);
+        //创建圆形预览框
+        path = new Path();
     }
 
+    //谷歌要求重写，具体原因还未探究
     @Override
     public boolean performClick() {
-        // Calls the super implementation, which generates an AccessibilityEvent
-        // and calls the onClick() listener on the view, if any
         super.performClick();
-        // Handle the action for the custom click here
         return true;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
-        switch (action & MotionEvent.ACTION_MASK){
+        switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 mode = MODE_SINGLEPOINT;
-                oldX = event.getRawX();
-                oldY = event.getRawY();
-                location = findLocation((int) oldX, (int) oldY - getStatusBarHeight(mContext));
+                preX = event.getRawX();
+                preY = event.getRawY();
+                //由于getRawX()返回的是原点在屏幕左上角的触摸点坐标，而top和bottom的坐标原点在标题栏之下，因此将preY减去标题栏+状态栏高度
+                location = findLocation((int) preX, (int) preY - getStatusBarHeight(mContext));
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
                 mode = MODE_DOUBLEPOINT;
-                float oldX1 = event.getX();
-                float oldY1 = event.getY();
-                float oldX2 = event.getX(1);
-                float oldY2 = event.getY(1);
-                float disX=Math.abs(event.getX(0)-event.getX(1));
-                float disY=Math.abs(event.getY(0)-event.getY(1));
-                oldLength = (float) Math.sqrt(disX*disX+disY*disY);
-//                oldLength = (float) Math.sqrt((oldX - oldX2) * (oldX - oldX2) + (oldY - oldY2) * (oldY - oldY2));
-                Log.e(TAG, "onTouchEvent:old   "+oldX1+"    "+oldY1+"    "+ oldX2 +"    "+ oldY2);
+                float disX = Math.abs(event.getX(0) - event.getX(1));
+                float disY = Math.abs(event.getY(0) - event.getY(1));
+                preLength = (float) Math.sqrt(disX * disX + disY * disY);
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (mode == MODE_DOUBLEPOINT) {
-                    float newX1 = event.getX();
-                    float newY1 = event.getY();
-                    float newX2 = event.getX(1);
-                    float newY2 = event.getY(1);
-                    disX=Math.abs(event.getX(0)-event.getX(1));
-                    disY=Math.abs(event.getY(0)-event.getY(1));
-                    float newLength = (float) Math.sqrt(disX*disX+disY*disY);
-                    Log.e(TAG, "onTouchEvent:new   " + newX1 + "    " + newY1 + "    " + newX2 + "    " + newY2);
-//                    float newLength = (float) Math.sqrt((newX1 - newX2) * (newX1 - newX2) + (newY1 - newY2) * (newY1- newY2));
-//                    Log.e(TAG, "onTouchEvent: " + newLength + "       " + oldLength);
-                    float scale = (newLength-oldLength)/2;
-                    layout((int)(getLeft()-scale),(int)(getTop()-scale),(int)(getRight()+scale),(int)(getBottom()+scale));
-                    oldLength = newLength;
-                }else if (mode == MODE_SINGLEPOINT){
+                if (mode == MODE_DOUBLEPOINT) {//双点触控
+                    //计算两点间距
+                    disX = Math.abs(event.getX(0) - event.getX(1));
+                    disY = Math.abs(event.getY(0) - event.getY(1));
+                    float curLength = (float) Math.sqrt(disX * disX + disY * disY);
+                    //当前间距和之前间距相减除以2，因为left+scale和right+scale，宽度扩大2*scale=间距之差
+                    float scale = (curLength - preLength) / 2;
+                    left -= scale;
+                    top -= scale;
+                    right += scale;
+                    bottom += scale;
+                    preLength = curLength;//当前间距已是之前间距
+                } else if (mode == MODE_SINGLEPOINT) {//单点触控
                     float newX = event.getRawX();
                     float newY = event.getRawY();
-                    Log.e("x and y", "onTouchEvent: " + newX + "   " + newY);
-                    int offsetX = (int) (newX - oldX);
-                    int offsetY = (int) (newY - oldY);
-                    switch (location) {
+                    int offsetX = (int) (newX - preX);
+                    int offsetY = (int) (newY - preY);
+                    switch (location) {//根据落点在方框位置有不同操作，如在顶边，则top加上触点移动偏移量
                         case LOCATION_TOP:
-                            layout(getLeft(), getTop() + offsetY, getRight(), getBottom());
-                            oldX = newX;
-                            oldY = newY;
+                            top += offsetY;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_RIGHTTOP:
-                            layout(getLeft(), getTop() + offsetY, getRight() + offsetX, getBottom());
-                            oldX = newX;
-                            oldY = newY;
+                            right += offsetX;
+                            top += offsetY;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_RIGHT:
-                            layout(getLeft(), getTop(), getRight() + offsetX, getBottom());
-                            oldX = newX;
-                            oldY = newY;
+                            right += offsetX;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_RIGHTBOTTOM:
-                            layout(getLeft(), getTop(), getRight() + offsetX, getBottom() + offsetY);
-                            oldX = newX;
-                            oldY = newY;
+                            bottom += offsetY;
+                            right += offsetX;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_BOTTOM:
-                            layout(getLeft(), getTop(), getRight(), getBottom() + offsetY);
-                            oldX = newX;
-                            oldY = newY;
+                            bottom += offsetY;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_LEFTBOTTOM:
-                            layout(getLeft() + offsetX, getTop(), getRight(), getBottom() + offsetY);
-                            oldX = newX;
-                            oldY = newY;
+                            left += offsetX;
+                            bottom += offsetY;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_LEFT:
-                            layout(getLeft() + offsetX, getTop(), getRight(), getBottom());
-                            oldX = newX;
-                            oldY = newY;
+                            left += offsetX;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_LEFTTOP:
-                            layout(getLeft() + offsetX, getTop() + offsetY, getRight(), getBottom());
-                            oldX = newX;
-                            oldY = newY;
+                            left += offsetX;
+                            top += offsetY;
+                            preX = newX;
+                            preY = newY;
                             break;
                         case LOCATION_INSIDE:
-                            layout(getLeft() + offsetX, getTop() + offsetY, getRight() + offsetX, getBottom() + offsetY);
-                            oldX = newX;
-                            oldY = newY;
+                            left += offsetX;
+                            top += offsetY;
+                            right += offsetX;
+                            bottom += offsetY;
+                            preX = newX;
+                            preY = newY;
                             break;
                     }
                 }
+                invalidate();//调draw方法刷新
                 break;
+            //抬起时触发点击，暂无需实现
             case MotionEvent.ACTION_POINTER_UP:
             case MotionEvent.ACTION_UP:
-                mode = MODE_READY;
+                mode = MODE_NONE;
                 performClick();
                 break;
-            }
+        }
         return true;
     }
 
+    //该方法返回状态栏加上标题栏的高度和
     private int getStatusBarHeight(Context context) {
-        Rect outRect1=new Rect();
-        ((Activity)context).getWindow().getDecorView().getWindowVisibleDisplayFrame(outRect1);
-        return outRect1.top+((Activity)context).getWindow().findViewById(Window.ID_ANDROID_CONTENT).getTop();
+        Rect outRect1 = new Rect();
+        ((Activity) context).getWindow().getDecorView().getWindowVisibleDisplayFrame(outRect1);
+        return outRect1.top + ((Activity) context).getWindow().findViewById(Window.ID_ANDROID_CONTENT).getTop();
     }
 
-
+    //找到点（x,y）在方形框中的位置
     private int findLocation(int x, int y) {
-        int left = getLeft();
-        int right = getRight();
-        int top = getTop();
-        int bottom = getBottom();
-        Log.e(TAG, "findLocation: " + " left " + left + " right " + right + " top " + top + " bottom " + bottom + " x " + x + " y " + y);
         boolean isLeft = false;
         boolean isTop = false;
         boolean isRight = false;
         boolean isBottom = false;
-        if (x < left + 50 && x > left - 50)
+        if (x < left + 50 && x > left - 50)//给定-50到50的误差范围，以免过于难触发
             isLeft = true;
         else if (x > right - 50 && x < right + 50)
             isRight = true;
@@ -205,11 +210,25 @@ public class CroppingFrame extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        paint.setColor(Color.BLUE);
-        paint.setStrokeWidth(25);
-        paint.setAntiAlias(true);
-        paint.setStyle(Paint.Style.STROKE);
-        canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+        if (!isMeasured) {//第一次测量完毕时，getWidth才有值，因此在这里初始化方框的四条边
+            left = (getWidth() - DEAFULT_SIZE) / 2;
+            right = (getWidth() + DEAFULT_SIZE) / 2;
+            top = (getHeight() - DEAFULT_SIZE) / 2;
+            bottom = (getHeight() + DEAFULT_SIZE) / 2;
+            isMeasured = true;
+        }
+        path.reset();
+        path.addRect(left, top, right,bottom, Path.Direction.CW);
+        //保存当前canvas 状态
+        canvas.save();
+        //将当前画布可以绘画区域限制死为预览框外的区域
+        canvas.clipPath(path, Region.Op.DIFFERENCE);
+        //绘画半透明遮罩
+        canvas.drawColor(Color.parseColor("#90000000"));
+        //还原画布状态
+        canvas.restore();
+        //显示像素
+        canvas.drawText((right-left) + "x" + (bottom-top), (left+right) / 2, (top+bottom) / 2, paintText);
     }
 
     @Override
@@ -218,13 +237,14 @@ public class CroppingFrame extends View {
         setMeasuredDimension(getLength(widthMeasureSpec), getLength(heightMeasureSpec));
     }
 
+    //wrapcontent和matchparent都填充满父布局，后面有需求可以再改
     public int getLength(int measureSpec) {
         int mode = MeasureSpec.getMode(measureSpec);
         switch (mode) {
             case MeasureSpec.EXACTLY:
                 return MeasureSpec.getSize(measureSpec);
             case MeasureSpec.AT_MOST:
-                return DEAFULT_SIZE;
+                return MeasureSpec.getSize(measureSpec);
             case MeasureSpec.UNSPECIFIED:
                 return 0;
         }
