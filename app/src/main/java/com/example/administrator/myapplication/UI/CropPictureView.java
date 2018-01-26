@@ -1,8 +1,11 @@
 package com.example.administrator.myapplication.UI;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Region;
@@ -12,6 +15,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.example.administrator.myapplication.R;
+import com.example.administrator.myapplication.Util.BitmapUtil;
 import com.example.administrator.myapplication.Util.PixelUtil;
 
 import static android.content.ContentValues.TAG;
@@ -21,21 +26,10 @@ import static android.content.ContentValues.TAG;
 
 public class CropPictureView extends View {
 
-    private int mMinX;//方形框在x方向最小值
-    private int mMaxX;//方形框在x方向最大值
-    private int mMinY;//方形框在y方向最小值
-    private int mMaxY;//方形框在y方向最大值
+    private static final float DEFAULT_BUTTON_SCALE_SMALL = 1f;//默认按钮缩小时倍数
+    private static final float DEFAULT_BUTTON_SCALE_BIG = 1.3f;//默认按钮放大时倍数
     private static final int DEAFULT_SIZE = 250;//方形框默认边长250dp
     private static final int DEAFULT_MIN_SIZE = 100;//方形框默认最小边长50dp
-    private int mMinSize;//方框最小边长
-    private int mSize;//方框边长
-    private int mLeft;//方形框左边位置
-    private int mRight;//方形框右边位置
-    private int mTop;//方形框顶边位置
-    private int mBottom;//方形框底边位置
-    private float mPreX;//上一个触摸点
-    private float mPreY;//上一个触摸点
-    private int mLocation = 0;//记录触摸点初始位置
     private static final int LOCATION_TOP = 100;//标志：触摸点位置在方形框顶边
     private static final int LOCATION_RIGHTTOP = 101;//标志：触摸点位置在方形框右上角
     private static final int LOCATION_RIGHT = 102;//标志：触摸点位置在方形框右边
@@ -48,11 +42,56 @@ public class CropPictureView extends View {
     private static final int MODE_SINGLEPOINT = 200;//标志：触摸模式为单指
     private static final int MODE_DOUBLEPOINT = 201;//标志：触摸模式为双指
     private static final int MODE_NONE = 202;//标志：触摸模式为无
+    private int mMinX;//方形框在x方向最小值
+    private int mMaxX;//方形框在x方向最大值
+    private int mMinY;//方形框在y方向最小值
+    private int mMaxY;//方形框在y方向最大值
+    private int mMinSize;//方框最小边长
+    private int mSize;//方框边长
+    private int mLeft;//方形框左边位置
+    private int mRight;//方形框右边位置
+    private int mTop;//方形框顶边位置
+    private int mBottom;//方形框底边位置
+    private float mPreX;//上一个触摸点
+    private float mPreY;//上一个触摸点
+    private int mLocation = 0;//记录触摸点初始位置
     private int mMode = MODE_NONE;//默认为无
     private float mPreLength;//记录缩放时上一个两点间距
     private Paint mPaintText = new Paint();//文本画笔，全局生成，避免重复实例化造成onDraw时间过长
     private boolean mIsMeasured = false;//标志位：只在第一次测量时设置方形框位置和边长
     private Path mPath;//同文本画笔，用于把半透明区域限制在方形框外面
+    private Paint mPaint;//分割线画笔
+
+    //各个按钮的bitmap
+    private Bitmap cropButtonHor;
+    private Bitmap cropButtonVer;
+    private Bitmap cropButtonLeftTop;
+    private Bitmap cropButtonRightTop;
+    private Bitmap cropButtonLeftBottom;
+    private Bitmap cropButtonRightBottom;
+
+    //各个按钮的matrix，用于控制位置和缩放
+    private Matrix matrixButtonLeftTop;
+    private Matrix matrixButtonRightTop;
+    private Matrix matrixButtonRightBottom;
+    private Matrix matrixButtonLeftBottom;
+    private Matrix matrixButtonLeft;
+    private Matrix matrixButtonRight;
+    private Matrix matrixButtonTop;
+    private Matrix matrixButtonBottom;
+
+    //各个按钮的缩放倍数，默认为1
+    private float buttonLeftTopScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightTopScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonLeftScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonTopScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightScale = DEFAULT_BUTTON_SCALE_SMALL;
+
+    //文字Y轴偏移量，用于使文字居中
+    private int textOffsetY;
 
     public CropPictureView(Context context) {
         this(context, null);
@@ -64,6 +103,7 @@ public class CropPictureView extends View {
 
     /**
      * 初始化一些成员变量
+     *
      * @param context
      * @param attrs
      * @param defStyleAttr
@@ -73,12 +113,37 @@ public class CropPictureView extends View {
         //绘制透明预览框
         mPaintText.setColor(Color.WHITE);
         mPaintText.setTextSize(50);
+        mPaintText.setAntiAlias(true);
         mPaintText.setTextAlign(Paint.Align.CENTER);
         //创建圆形预览框
         mPath = new Path();
         mSize = PixelUtil.Dp2Px(context, DEAFULT_SIZE);
         mMinSize = PixelUtil.Dp2Px(context, DEAFULT_MIN_SIZE);
+        //分隔线
+        mPaint = new Paint();
+        mPaint.setARGB(100, 255, 255, 255);
+        mPaint.setStrokeWidth(2);
+        //加载按钮背景
+        cropButtonHor = BitmapUtil.ScaleBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.crop_button_h), 0.5f);
+        cropButtonVer = BitmapUtil.ScaleBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.crop_button_v), 0.5f);
+        cropButtonLeftTop = BitmapUtil.ScaleBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.crop_button_left_top), 0.5f);
+        cropButtonRightTop = BitmapUtil.ScaleBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.crop_button_right_top), 0.5f);
+        cropButtonLeftBottom = BitmapUtil.ScaleBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.crop_button_left_bottom), 0.5f);
+        cropButtonRightBottom = BitmapUtil.ScaleBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.crop_button_right_bottom), 0.5f);
+        //实例化按钮Matrix
+        matrixButtonLeftTop = new Matrix();
+        matrixButtonRightTop = new Matrix();
+        matrixButtonRightBottom = new Matrix();
+        matrixButtonLeftBottom = new Matrix();
+        matrixButtonLeft = new Matrix();
+        matrixButtonRight = new Matrix();
+        matrixButtonTop = new Matrix();
+        matrixButtonBottom = new Matrix();
+        //计算Y轴文字偏移
+        Paint.FontMetrics fm = mPaintText.getFontMetrics();
+        textOffsetY = (int) ((fm.descent - fm.ascent) / 2 - fm.descent);
     }
+
 
     /**
      * 谷歌要求重写，具体原因还未探究
@@ -94,6 +159,7 @@ public class CropPictureView extends View {
      * 单指时落点在方框内则进行方框平移，落在边缘或角落时进行放大缩小操作，如落在左边时调整左边位置，落在左上角调整左边和顶边位置
      * 双指时两个落点都在方框内时，通过两指间距来调整方框大小，方框以框中心点为锚点进行缩放
      * 当方框边缘将超过限制区域时将停止放大，低于最小边长时停止缩小
+     *
      * @param event
      * @return true 处理点击事件
      */
@@ -107,8 +173,8 @@ public class CropPictureView extends View {
                     mMode = MODE_SINGLEPOINT;
                     mPreX = event.getX();
                     mPreY = event.getY();
-                    //由于getRawX()返回的是原点在屏幕左上角的触摸点坐标，而top和bottom的坐标原点在标题栏之下，因此将preY减去标题栏+状态栏高度
                     mLocation = findLocation((int) mPreX, (int) mPreY);
+                    invalidate();
                 }
                 break;
 
@@ -204,6 +270,8 @@ public class CropPictureView extends View {
                             break;
 
                         case LOCATION_RIGHTBOTTOM:
+                            buttonRightBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                            invalidate();
                             newRight = mRight + offsetX;
                             if (newRight > mLeft + mMinSize && newRight < mMaxX) {
                                 mRight = newRight;
@@ -244,6 +312,8 @@ public class CropPictureView extends View {
                             break;
 
                         case LOCATION_LEFTBOTTOM:
+                            buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                            invalidate();
                             int newLeft = mLeft + offsetX;
                             if (newLeft > mMinX && newLeft < mRight - mMinSize) {
                                 mLeft = newLeft;
@@ -284,6 +354,8 @@ public class CropPictureView extends View {
                             break;
 
                         case LOCATION_LEFTTOP:
+                            buttonLeftTopScale = DEFAULT_BUTTON_SCALE_BIG;
+                            invalidate();
                             newLeft = mLeft + offsetX;
                             if (newLeft > mMinX && newLeft < mRight - mMinSize) {
                                 mLeft = newLeft;
@@ -354,6 +426,8 @@ public class CropPictureView extends View {
             case MotionEvent.ACTION_UP:
                 mMode = MODE_NONE;
                 performClick();
+                resetButtonScale();
+                invalidate();
                 break;
         }
         return true;
@@ -361,51 +435,78 @@ public class CropPictureView extends View {
 
     /**
      * 判断落点（x,y）是否在方框内
+     *
      * @param x
      * @param y
      * @return
      */
     private boolean isInsideFrame(int x, int y) {
-        return x > mLeft && x < mRight && y > mTop && y < mBottom;
+        return x >= mLeft - 50 && x <= mRight + 50 && y >= mTop - 50 && y <= mBottom + 50;
     }
 
     /**
-     * 找到点（x,y）在方形框中的位置，例如：左上角
+     * 找到点（x,y）在方形框中的位置，例如：左上角。算完时改变对应位置的按钮缩放倍数
      */
     private int findLocation(int x, int y) {
-        boolean isLeft = false;
-        boolean isTop = false;
-        boolean isRight = false;
-        boolean isBottom = false;
-        if (x < mLeft + 50 && x > mLeft - 50)//给定-50到50的误差范围，以免过于难触发
-            isLeft = true;
-        else if (x > mRight - 50 && x < mRight + 50)
-            isRight = true;
-        if (y < mTop + 50 && y > mTop - 50)
-            isTop = true;
-        else if (y > mBottom - 50 && y < mBottom + 50)
-            isBottom = true;
-        if (isLeft) {
-            if (isTop) return LOCATION_LEFTTOP;
-            else if (isBottom) return LOCATION_LEFTBOTTOM;
-            else return LOCATION_LEFT;
-        } else if (isRight) {
-            if (isTop) return LOCATION_RIGHTTOP;
-            else if (isBottom) return LOCATION_RIGHTBOTTOM;
-            else return LOCATION_RIGHT;
-        } else if (isTop) return LOCATION_TOP;
-        else if (isBottom) return LOCATION_BOTTOM;
-        else return LOCATION_INSIDE;
+        if (x <= mLeft + 50) {
+            if (y <= mTop + 50) {
+                buttonLeftTopScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_LEFTTOP;
+            } else if (y >= mBottom - 50) {
+                buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_LEFTBOTTOM;
+            } else if (y >= (mBottom + mTop) / 2 - 50 && y <= (mBottom + mTop) / 2 + 50) {
+                buttonLeftScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_LEFT;
+            } else return LOCATION_INSIDE;
+        } else if (x >= mRight - 50) {
+            if (y <= mTop + 50) {
+                buttonRightTopScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_RIGHTTOP;
+            } else if (y >= mBottom - 50) {
+                buttonRightBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_RIGHTBOTTOM;
+            } else if (y >= (mBottom + mTop) / 2 - 50 && y <= (mBottom + mTop) / 2 + 50) {
+                buttonRightScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_RIGHT;
+            } else return LOCATION_INSIDE;
+        } else if (y <= mTop + 50) {
+            if (x <= (mLeft + mRight) / 2 + 50 && x >= (mLeft + mRight) / 2 - 50) {
+                buttonTopScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_TOP;
+            } else return LOCATION_INSIDE;
+        } else if (y >= mBottom - 50) {
+            if (x <= (mLeft + mRight) / 2 + 50 && x >= (mLeft + mRight) / 2 - 50) {
+                buttonBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                return LOCATION_BOTTOM;
+            } else return LOCATION_INSIDE;
+        } else return LOCATION_INSIDE;
+    }
+
+    /**
+     * 重置按钮缩放倍数
+     */
+    private void resetButtonScale() {
+        buttonRightBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonRightTopScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonLeftTopScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonLeftScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonTopScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonRightScale = DEFAULT_BUTTON_SCALE_SMALL;
     }
 
     /**
      * 利用Path来规定canvas绘画时将要忽略的区域，规定好方框位置后即可画半透明区域
+     *
      * @param canvas
      */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (!mIsMeasured) {//第一次测量完毕时，getWidth才有值，因此在这里初始化方框的四条边
+        //第一次测量完毕时，getWidth才有值，因此在这里初始化方框的四条边
+        if (!mIsMeasured) {
             mLeft = (getWidth() - mSize) / 2;
             mRight = (getWidth() + mSize) / 2;
             mTop = (getHeight() - mSize) / 2;
@@ -416,6 +517,7 @@ public class CropPictureView extends View {
             mMaxY = getHeight();
             mIsMeasured = true;
         }
+
         mPath.reset();
         mPath.addRect(mLeft, mTop, mRight, mBottom, Path.Direction.CW);
         //保存当前canvas 状态
@@ -427,7 +529,44 @@ public class CropPictureView extends View {
         //还原画布状态
         canvas.restore();
         //显示像素
-        canvas.drawText((mRight - mLeft) + "x" + (mBottom - mTop), (mLeft + mRight) / 2, (mTop + mBottom) / 2, mPaintText);
+        canvas.drawText((mRight - mLeft) + "x" + (mBottom - mTop), (mLeft + mRight) / 2, (mTop + mBottom) / 2 + textOffsetY, mPaintText);
+        //画分割线
+        canvas.drawLine(mLeft, mTop, mLeft, mBottom, mPaint);
+        canvas.drawLine(mLeft + (mRight - mLeft) / 3 + 0.5f + 2, mTop, mLeft + (mRight - mLeft) / 3 + 0.5f + 2, mBottom, mPaint);
+        canvas.drawLine(mLeft + (mRight - mLeft) * 2 / 3 + 0.5f, mTop, mLeft + (mRight - mLeft) * 2 / 3 + 0.5f, mBottom, mPaint);
+        canvas.drawLine(mRight, mTop, mRight, mBottom, mPaint);
+        canvas.drawLine(mLeft, mTop, mRight, mTop, mPaint);
+        canvas.drawLine(mLeft, mTop + (mBottom - mTop) / 3 + 0.5f, mRight, mTop + (mBottom - mTop) / 3 + 0.5f, mPaint);
+        canvas.drawLine(mLeft, mTop + (mBottom - mTop) * 2 / 3 + 0.5f, mRight, mTop + (mBottom - mTop) * 2 / 3 + 0.5f, mPaint);
+        canvas.drawLine(mLeft, mBottom, mRight, mBottom, mPaint);
+
+        //四个角落的按钮Matrix设置偏移和缩放
+        matrixButtonLeftTop.setTranslate(mLeft - cropButtonLeftTop.getWidth() * buttonLeftTopScale / 2, mTop - cropButtonLeftTop.getHeight() * buttonLeftTopScale / 2);
+        matrixButtonRightTop.setTranslate(mRight - cropButtonRightTop.getWidth() * buttonRightTopScale / 2, mTop - cropButtonRightTop.getHeight() * buttonRightTopScale / 2);
+        matrixButtonLeftBottom.setTranslate(mLeft - cropButtonLeftBottom.getWidth() * buttonLeftBottomScale / 2, mBottom - cropButtonLeftBottom.getHeight() * buttonLeftBottomScale / 2);
+        matrixButtonRightBottom.setTranslate(mRight - cropButtonRightBottom.getWidth() * buttonRightBottomScale / 2, mBottom - cropButtonRightBottom.getHeight() * buttonRightBottomScale / 2);
+        matrixButtonLeftTop.preScale(buttonLeftTopScale, buttonLeftTopScale);
+        matrixButtonRightTop.preScale(buttonRightTopScale, buttonRightTopScale);
+        matrixButtonLeftBottom.preScale(buttonLeftBottomScale, buttonLeftBottomScale);
+        matrixButtonRightBottom.preScale(buttonRightBottomScale, buttonRightBottomScale);
+        canvas.drawBitmap(cropButtonLeftTop, matrixButtonLeftTop, null);
+        canvas.drawBitmap(cropButtonRightTop, matrixButtonRightTop, null);
+        canvas.drawBitmap(cropButtonLeftBottom, matrixButtonLeftBottom, null);
+        canvas.drawBitmap(cropButtonRightBottom, matrixButtonRightBottom, null);
+
+        //四条边上的按钮Matrix偏移和缩放
+        matrixButtonLeft.setTranslate(mLeft - cropButtonVer.getWidth() * buttonLeftScale / 2, mTop - cropButtonVer.getHeight() * buttonLeftScale / 2 + (mBottom - mTop) / 2);
+        matrixButtonRight.setTranslate(mRight - cropButtonVer.getWidth() * buttonRightScale / 2, mTop - cropButtonVer.getHeight() * buttonRightScale / 2 + (mBottom - mTop) / 2);
+        matrixButtonTop.setTranslate(mLeft - cropButtonHor.getWidth() * buttonTopScale / 2 + (mRight - mLeft) / 2, mTop - cropButtonHor.getHeight() * buttonTopScale / 2);
+        matrixButtonBottom.setTranslate(mLeft - cropButtonHor.getWidth() * buttonBottomScale / 2 + (mRight - mLeft) / 2, mBottom - cropButtonHor.getHeight() * buttonBottomScale / 2);
+        matrixButtonLeft.preScale(buttonLeftScale, buttonLeftScale);
+        matrixButtonRight.preScale(buttonRightScale, buttonRightScale);
+        matrixButtonTop.preScale(buttonTopScale, buttonTopScale);
+        matrixButtonBottom.preScale(buttonBottomScale, buttonBottomScale);
+        canvas.drawBitmap(cropButtonVer, matrixButtonLeft, null);
+        canvas.drawBitmap(cropButtonVer, matrixButtonRight, null);
+        canvas.drawBitmap(cropButtonHor, matrixButtonTop, null);
+        canvas.drawBitmap(cropButtonHor, matrixButtonBottom, null);
     }
 
     @Override
@@ -451,6 +590,5 @@ public class CropPictureView extends View {
         }
         return 0;
     }
-
 
 }
