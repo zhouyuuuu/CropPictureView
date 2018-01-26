@@ -11,16 +11,11 @@ import android.graphics.Path;
 import android.graphics.Region;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-
 import com.example.administrator.myapplication.R;
 import com.example.administrator.myapplication.Util.BitmapUtil;
 import com.example.administrator.myapplication.Util.PixelUtil;
-
-import static android.content.ContentValues.TAG;
-
 
 //Created by Administrator on 2018/1/23.
 
@@ -80,18 +75,29 @@ public class CropPictureView extends View {
     private Matrix matrixButtonTop;
     private Matrix matrixButtonBottom;
 
-    //各个按钮的缩放倍数，默认为1
-    private float buttonLeftTopScale = DEFAULT_BUTTON_SCALE_SMALL;
-    private float buttonRightTopScale = DEFAULT_BUTTON_SCALE_SMALL;
-    private float buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
-    private float buttonRightBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
-    private float buttonLeftScale = DEFAULT_BUTTON_SCALE_SMALL;
-    private float buttonTopScale = DEFAULT_BUTTON_SCALE_SMALL;
-    private float buttonBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
-    private float buttonRightScale = DEFAULT_BUTTON_SCALE_SMALL;
+    //各个按钮的目标缩放倍数，默认为1
+    private float buttonLeftTopTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightTopTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonLeftBottomTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightBottomTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonLeftTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonTopTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonBottomTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+
+    //各个按钮的当前缩放倍数，默认为1
+    private float buttonLeftTopCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightTopCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonLeftBottomCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightBottomCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonLeftCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonTopCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonBottomCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
+    private float buttonRightCurrentScale = DEFAULT_BUTTON_SCALE_SMALL;
 
     //文字Y轴偏移量，用于使文字居中
     private int textOffsetY;
+
 
     public CropPictureView(Context context) {
         this(context, null);
@@ -199,7 +205,6 @@ public class CropPictureView extends View {
                     int newTop = (int) (mTop - scale + 0.5f);
                     int newRight = (int) (mRight + scale + 0.5f);
                     int newBottom = (int) (mBottom + scale + 0.5f);
-                    Log.e(TAG, "onTouchEvent: " + (newLeft - mLeft) + "  " + (newRight - mRight) + "  " + (newTop - mTop) + "  " + (newBottom - mBottom));
                     if ((scale > 0 && newLeft > mMinX && newRight < mMaxX && newTop > mMinY && newBottom < mMaxY) || (scale <= 0 && newLeft < newRight - mMinSize && newTop < newBottom - mMinSize)) {
                         mLeft = newLeft;
                         mTop = newTop;
@@ -270,8 +275,6 @@ public class CropPictureView extends View {
                             break;
 
                         case LOCATION_RIGHTBOTTOM:
-                            buttonRightBottomScale = DEFAULT_BUTTON_SCALE_BIG;
-                            invalidate();
                             newRight = mRight + offsetX;
                             if (newRight > mLeft + mMinSize && newRight < mMaxX) {
                                 mRight = newRight;
@@ -312,8 +315,6 @@ public class CropPictureView extends View {
                             break;
 
                         case LOCATION_LEFTBOTTOM:
-                            buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_BIG;
-                            invalidate();
                             int newLeft = mLeft + offsetX;
                             if (newLeft > mMinX && newLeft < mRight - mMinSize) {
                                 mLeft = newLeft;
@@ -354,8 +355,6 @@ public class CropPictureView extends View {
                             break;
 
                         case LOCATION_LEFTTOP:
-                            buttonLeftTopScale = DEFAULT_BUTTON_SCALE_BIG;
-                            invalidate();
                             newLeft = mLeft + offsetX;
                             if (newLeft > mMinX && newLeft < mRight - mMinSize) {
                                 mLeft = newLeft;
@@ -450,34 +449,34 @@ public class CropPictureView extends View {
     private int findLocation(int x, int y) {
         if (x <= mLeft + 50) {
             if (y <= mTop + 50) {
-                buttonLeftTopScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonLeftTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_LEFTTOP;
             } else if (y >= mBottom - 50) {
-                buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonLeftBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_LEFTBOTTOM;
             } else if (y >= (mBottom + mTop) / 2 - 50 && y <= (mBottom + mTop) / 2 + 50) {
-                buttonLeftScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonLeftTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_LEFT;
             } else return LOCATION_INSIDE;
         } else if (x >= mRight - 50) {
             if (y <= mTop + 50) {
-                buttonRightTopScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonRightTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_RIGHTTOP;
             } else if (y >= mBottom - 50) {
-                buttonRightBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonRightBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_RIGHTBOTTOM;
             } else if (y >= (mBottom + mTop) / 2 - 50 && y <= (mBottom + mTop) / 2 + 50) {
-                buttonRightScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonRightTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_RIGHT;
             } else return LOCATION_INSIDE;
         } else if (y <= mTop + 50) {
             if (x <= (mLeft + mRight) / 2 + 50 && x >= (mLeft + mRight) / 2 - 50) {
-                buttonTopScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_TOP;
             } else return LOCATION_INSIDE;
         } else if (y >= mBottom - 50) {
             if (x <= (mLeft + mRight) / 2 + 50 && x >= (mLeft + mRight) / 2 - 50) {
-                buttonBottomScale = DEFAULT_BUTTON_SCALE_BIG;
+                buttonBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 return LOCATION_BOTTOM;
             } else return LOCATION_INSIDE;
         } else return LOCATION_INSIDE;
@@ -487,14 +486,14 @@ public class CropPictureView extends View {
      * 重置按钮缩放倍数
      */
     private void resetButtonScale() {
-        buttonRightBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
-        buttonLeftBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
-        buttonRightTopScale = DEFAULT_BUTTON_SCALE_SMALL;
-        buttonLeftTopScale = DEFAULT_BUTTON_SCALE_SMALL;
-        buttonLeftScale = DEFAULT_BUTTON_SCALE_SMALL;
-        buttonTopScale = DEFAULT_BUTTON_SCALE_SMALL;
-        buttonBottomScale = DEFAULT_BUTTON_SCALE_SMALL;
-        buttonRightScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonRightBottomTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonLeftBottomTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonRightTopTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonLeftTopTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonLeftTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonTopTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonBottomTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
+        buttonRightTargetScale = DEFAULT_BUTTON_SCALE_SMALL;
     }
 
     /**
@@ -530,6 +529,7 @@ public class CropPictureView extends View {
         canvas.restore();
         //显示像素
         canvas.drawText((mRight - mLeft) + "x" + (mBottom - mTop), (mLeft + mRight) / 2, (mTop + mBottom) / 2 + textOffsetY, mPaintText);
+
         //画分割线
         canvas.drawLine(mLeft, mTop, mLeft, mBottom, mPaint);
         canvas.drawLine(mLeft + (mRight - mLeft) / 3 + 0.5f + 2, mTop, mLeft + (mRight - mLeft) / 3 + 0.5f + 2, mBottom, mPaint);
@@ -540,29 +540,44 @@ public class CropPictureView extends View {
         canvas.drawLine(mLeft, mTop + (mBottom - mTop) * 2 / 3 + 0.5f, mRight, mTop + (mBottom - mTop) * 2 / 3 + 0.5f, mPaint);
         canvas.drawLine(mLeft, mBottom, mRight, mBottom, mPaint);
 
-        //四个角落的按钮Matrix设置偏移和缩放
-        matrixButtonLeftTop.setTranslate(mLeft - cropButtonLeftTop.getWidth() * buttonLeftTopScale / 2, mTop - cropButtonLeftTop.getHeight() * buttonLeftTopScale / 2);
-        matrixButtonRightTop.setTranslate(mRight - cropButtonRightTop.getWidth() * buttonRightTopScale / 2, mTop - cropButtonRightTop.getHeight() * buttonRightTopScale / 2);
-        matrixButtonLeftBottom.setTranslate(mLeft - cropButtonLeftBottom.getWidth() * buttonLeftBottomScale / 2, mBottom - cropButtonLeftBottom.getHeight() * buttonLeftBottomScale / 2);
-        matrixButtonRightBottom.setTranslate(mRight - cropButtonRightBottom.getWidth() * buttonRightBottomScale / 2, mBottom - cropButtonRightBottom.getHeight() * buttonRightBottomScale / 2);
-        matrixButtonLeftTop.preScale(buttonLeftTopScale, buttonLeftTopScale);
-        matrixButtonRightTop.preScale(buttonRightTopScale, buttonRightTopScale);
-        matrixButtonLeftBottom.preScale(buttonLeftBottomScale, buttonLeftBottomScale);
-        matrixButtonRightBottom.preScale(buttonRightBottomScale, buttonRightBottomScale);
+        //四个角落的按钮Matrix设置偏移和缩放，这里先由ScaleAnimator函数计算出此次刷新的当前倍数，
+        buttonLeftTopCurrentScale = ScaleAnimator(buttonLeftTopTargetScale, buttonLeftTopCurrentScale);
+        matrixButtonLeftTop.setTranslate(mLeft - cropButtonLeftTop.getWidth() * buttonLeftTopCurrentScale / 2, mTop - cropButtonLeftTop.getHeight() * buttonLeftTopCurrentScale / 2);
+        matrixButtonLeftTop.preScale(buttonLeftTopCurrentScale, buttonLeftTopCurrentScale);
+
+        buttonRightTopCurrentScale = ScaleAnimator(buttonRightTopTargetScale, buttonRightTopCurrentScale);
+        matrixButtonRightTop.setTranslate(mRight - cropButtonRightTop.getWidth() * buttonRightTopCurrentScale / 2, mTop - cropButtonRightTop.getHeight() * buttonRightTopCurrentScale / 2);
+        matrixButtonRightTop.preScale(buttonRightTopCurrentScale, buttonRightTopCurrentScale);
+
+        buttonLeftBottomCurrentScale = ScaleAnimator(buttonLeftBottomTargetScale, buttonLeftBottomCurrentScale);
+        matrixButtonLeftBottom.setTranslate(mLeft - cropButtonLeftBottom.getWidth() * buttonLeftBottomCurrentScale / 2, mBottom - cropButtonLeftBottom.getHeight() * buttonLeftBottomCurrentScale / 2);
+        matrixButtonLeftBottom.preScale(buttonLeftBottomCurrentScale, buttonLeftBottomCurrentScale);
+
+        buttonRightBottomCurrentScale = ScaleAnimator(buttonRightBottomTargetScale, buttonRightBottomCurrentScale);
+        matrixButtonRightBottom.setTranslate(mRight - cropButtonRightBottom.getWidth() * buttonRightBottomCurrentScale / 2, mBottom - cropButtonRightBottom.getHeight() * buttonRightBottomCurrentScale / 2);
+        matrixButtonRightBottom.preScale(buttonRightBottomCurrentScale, buttonRightBottomCurrentScale);
+
         canvas.drawBitmap(cropButtonLeftTop, matrixButtonLeftTop, null);
         canvas.drawBitmap(cropButtonRightTop, matrixButtonRightTop, null);
         canvas.drawBitmap(cropButtonLeftBottom, matrixButtonLeftBottom, null);
         canvas.drawBitmap(cropButtonRightBottom, matrixButtonRightBottom, null);
 
         //四条边上的按钮Matrix偏移和缩放
-        matrixButtonLeft.setTranslate(mLeft - cropButtonVer.getWidth() * buttonLeftScale / 2, mTop - cropButtonVer.getHeight() * buttonLeftScale / 2 + (mBottom - mTop) / 2);
-        matrixButtonRight.setTranslate(mRight - cropButtonVer.getWidth() * buttonRightScale / 2, mTop - cropButtonVer.getHeight() * buttonRightScale / 2 + (mBottom - mTop) / 2);
-        matrixButtonTop.setTranslate(mLeft - cropButtonHor.getWidth() * buttonTopScale / 2 + (mRight - mLeft) / 2, mTop - cropButtonHor.getHeight() * buttonTopScale / 2);
-        matrixButtonBottom.setTranslate(mLeft - cropButtonHor.getWidth() * buttonBottomScale / 2 + (mRight - mLeft) / 2, mBottom - cropButtonHor.getHeight() * buttonBottomScale / 2);
-        matrixButtonLeft.preScale(buttonLeftScale, buttonLeftScale);
-        matrixButtonRight.preScale(buttonRightScale, buttonRightScale);
-        matrixButtonTop.preScale(buttonTopScale, buttonTopScale);
-        matrixButtonBottom.preScale(buttonBottomScale, buttonBottomScale);
+        buttonLeftCurrentScale = ScaleAnimator(buttonLeftTargetScale, buttonLeftCurrentScale);
+        buttonRightCurrentScale = ScaleAnimator(buttonRightTargetScale, buttonRightCurrentScale);
+        buttonTopCurrentScale = ScaleAnimator(buttonTopTargetScale, buttonTopCurrentScale);
+        buttonBottomCurrentScale = ScaleAnimator(buttonBottomTargetScale, buttonBottomCurrentScale);
+
+        matrixButtonLeft.setTranslate(mLeft - cropButtonVer.getWidth() * buttonLeftCurrentScale / 2, mTop - cropButtonVer.getHeight() * buttonLeftCurrentScale / 2 + (mBottom - mTop) / 2);
+        matrixButtonRight.setTranslate(mRight - cropButtonVer.getWidth() * buttonRightCurrentScale / 2, mTop - cropButtonVer.getHeight() * buttonRightCurrentScale / 2 + (mBottom - mTop) / 2);
+        matrixButtonTop.setTranslate(mLeft - cropButtonHor.getWidth() * buttonTopCurrentScale / 2 + (mRight - mLeft) / 2, mTop - cropButtonHor.getHeight() * buttonTopCurrentScale / 2);
+        matrixButtonBottom.setTranslate(mLeft - cropButtonHor.getWidth() * buttonBottomCurrentScale / 2 + (mRight - mLeft) / 2, mBottom - cropButtonHor.getHeight() * buttonBottomCurrentScale / 2);
+
+        matrixButtonLeft.preScale(buttonLeftCurrentScale, buttonLeftCurrentScale);
+        matrixButtonRight.preScale(buttonRightCurrentScale, buttonRightCurrentScale);
+        matrixButtonTop.preScale(buttonTopCurrentScale, buttonTopCurrentScale);
+        matrixButtonBottom.preScale(buttonBottomCurrentScale, buttonBottomCurrentScale);
+
         canvas.drawBitmap(cropButtonVer, matrixButtonLeft, null);
         canvas.drawBitmap(cropButtonVer, matrixButtonRight, null);
         canvas.drawBitmap(cropButtonHor, matrixButtonTop, null);
@@ -589,6 +604,27 @@ public class CropPictureView extends View {
                 return 0;
         }
         return 0;
+    }
+
+    /**
+     * 如缩放倍数从1.0到2.0，该函数将该变化分成10次返回给当前倍数，连续刷新后可达到一个动画效果，设置完成后ScaleAnimator会再次发出刷新信号，
+     * 直到当前倍数等于目标倍数，ScaleAnimator就不会发出刷新信号，避免占用系统资源。
+     *
+     * @param targetScale
+     * @param curScale
+     * @return
+     */
+    public float ScaleAnimator(float targetScale, float curScale) {
+        double page = (DEFAULT_BUTTON_SCALE_BIG - DEFAULT_BUTTON_SCALE_SMALL) / 10;
+        if (targetScale == DEFAULT_BUTTON_SCALE_BIG) {
+            if (curScale + page >= targetScale) return targetScale;
+            else curScale += page;
+        } else if (targetScale == DEFAULT_BUTTON_SCALE_SMALL) {
+            if (curScale - page <= targetScale) return targetScale;
+            else curScale -= page;
+        }
+        invalidate();
+        return curScale;
     }
 
 }
