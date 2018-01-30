@@ -111,6 +111,10 @@ public class CropPictureView extends View {
 
     //文字Y轴偏移量，用于使文字居中
     private int mTextOffsetY;
+    private int deviationX;
+    private int deviationY;
+    private int offsetToBorderX;
+    private int offsetToBorderY;
 
 
     public CropPictureView(Context context) {
@@ -229,8 +233,8 @@ public class CropPictureView extends View {
                 } else if (mMode == MODE_POINT_SINGLE) {//单点触控
                     float newX = event.getX();
                     float newY = event.getY();
-                    int offsetX = (int) (newX - mPreX);
-                    int offsetY = (int) (newY - mPreY);
+                    int offsetX = (int) (newX - mPreX+0.5f);
+                    int offsetY = (int) (newY - mPreY+0.5f);
                     switch (mLocation) {//根据落点在方框位置有不同操作，如在顶边，则top加上触点移动偏移量
 
                         case LOCATION_TOP:
@@ -253,22 +257,22 @@ public class CropPictureView extends View {
                                 mTop = values[0];
                                 mPreY = values[1];
                             } else {
-                                if (offsetX * offsetY < 0) {
-                                    if (Math.abs(offsetY) < Math.abs(offsetX)) {
-                                        mTop = mTop+offsetY;
+                                offsetToBorderX = (int) (newX-(mRight+ deviationX));
+                                offsetToBorderY = (int) (newY-(mTop+ deviationY));
+                                if (offsetToBorderX * offsetToBorderY < 0) {
+                                    if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
+                                        mTop = mTop+offsetToBorderY;
                                         mTop = limitAxisValues(LOCATION_TOP,mTop);
                                         mRight = (int) (mLeft + ((mBottom - mTop) * mFrameProportion + 0.5f));
                                         mRight = limitAxisValues(LOCATION_RIGHT,mRight);
                                         mTop = (int) (mBottom - ((mRight - mLeft) / mFrameProportion + 0.5f));
                                     } else {
-                                        mRight = mRight+offsetX;
+                                        mRight = mRight+offsetToBorderX;
                                         mRight = limitAxisValues(LOCATION_RIGHT,mRight);
                                         mTop = (int) (mBottom - ((mRight - mLeft) / mFrameProportion + 0.5f));
                                         mTop = limitAxisValues(LOCATION_TOP,mTop);
                                         mRight = (int) (mLeft + ((mBottom - mTop) * mFrameProportion + 0.5f));
                                     }
-                                    mPreX = limitAxisValues(LOCATION_RIGHT, (int) newX);
-                                    mPreY = limitAxisValues(LOCATION_TOP, (int) newY);
                                 }
                             }
                             break;
@@ -293,24 +297,23 @@ public class CropPictureView extends View {
                                 mBottom = values[0];
                                 mPreY = values[1];
                             } else {
-                                if (offsetX * offsetY > 0) {
-                                    if (Math.abs(offsetY) < Math.abs(offsetX)) {
-                                        mBottom = mBottom+offsetX;
+                                offsetToBorderX = (int) (newX-(mRight+ deviationX));
+                                offsetToBorderY = (int) (newY-(mBottom+ deviationY));
+                                if (offsetToBorderX * offsetToBorderY > 0) {
+                                    if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
+                                        mBottom = mBottom+ offsetToBorderY;
                                         mBottom = limitAxisValues(LOCATION_BOTTOM,mBottom);
                                         mRight = (int) (mLeft + (mBottom - mTop) * mFrameProportion + 0.5f);
                                         mRight = limitAxisValues(LOCATION_RIGHT,mRight);
                                         mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                     } else {
-                                        mRight = mRight+offsetX;
+                                        mRight = mRight+ offsetToBorderX;
                                         mRight = limitAxisValues(LOCATION_RIGHT,mRight);
                                         mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                         mBottom = limitAxisValues(LOCATION_BOTTOM,mBottom);
                                         mRight = (int) (mLeft + (mBottom - mTop) * mFrameProportion + 0.5f);
                                     }
-                                    mPreX = limitAxisValues(LOCATION_RIGHT, (int) newX);
-                                    mPreY = limitAxisValues(LOCATION_BOTTOM, (int) newY);
                                 }
-
                             }
                             break;
 
@@ -334,22 +337,22 @@ public class CropPictureView extends View {
                                 mBottom = values[0];
                                 mPreY = values[1];
                             } else {
-                                if (offsetX * offsetY < 0) {
-                                    if (Math.abs(offsetY) < Math.abs(offsetX)) {
-                                        mBottom += offsetY;
+                                offsetToBorderX = (int) (newX-(mLeft+ deviationX));
+                                offsetToBorderY = (int) (newY-(mBottom+ deviationY));
+                                if (offsetToBorderX * offsetToBorderY < 0) {
+                                    if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
+                                        mBottom = mBottom+ offsetToBorderY;
                                         mBottom = limitAxisValues(LOCATION_BOTTOM,mBottom);
-                                        mLeft = (int) (mRight - ((mBottom - mTop) * mFrameProportion + 0.5f));
+                                        mLeft = (int) (mRight - (mBottom - mTop) * mFrameProportion + 0.5f);
                                         mLeft = limitAxisValues(LOCATION_LEFT,mLeft);
-                                        mBottom = (int) (mTop + ((mRight - mLeft) / mFrameProportion + 0.5f));
+                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                     } else {
-                                        mLeft += offsetX;
+                                        mLeft = mLeft+ offsetToBorderX;
                                         mLeft = limitAxisValues(LOCATION_LEFT,mLeft);
-                                        mBottom = (int) (mTop + ((mRight - mLeft) / mFrameProportion + 0.5f));
+                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                         mBottom = limitAxisValues(LOCATION_BOTTOM,mBottom);
-                                        mLeft = (int) (mRight - ((mBottom - mTop) * mFrameProportion + 0.5f));
+                                        mLeft = (int) (mRight - (mBottom - mTop) * mFrameProportion + 0.5f);
                                     }
-                                    mPreX = limitAxisValues(LOCATION_LEFT, (int) newX);
-                                    mPreY = limitAxisValues(LOCATION_BOTTOM, (int) newY);
                                 }
                             }
                             break;
@@ -372,22 +375,22 @@ public class CropPictureView extends View {
                                 mTop = values[0];
                                 mPreY = values[1];
                             } else {
-                                if (offsetX * offsetY > 0) {
-                                    if (Math.abs(offsetY) < Math.abs(offsetX)) {
-                                        mTop= mTop + offsetY;
+                                offsetToBorderX = (int) (newX-(mLeft+ deviationX));
+                                offsetToBorderY = (int) (newY-(mTop+ deviationY));
+                                if (offsetToBorderX * offsetToBorderY > 0) {
+                                    if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
+                                        mTop += offsetToBorderY;
                                         mTop = limitAxisValues(LOCATION_TOP,mTop);
                                         mLeft = (int) (mRight - ((mBottom - mTop) * mFrameProportion + 0.5f));
                                         mLeft = limitAxisValues(LOCATION_LEFT,mLeft);
                                         mTop = (int) (mBottom - ((mRight - mLeft) / mFrameProportion + 0.5f));
                                     } else {
-                                        mLeft += offsetX;
+                                        mLeft += offsetToBorderX;
                                         mLeft = limitAxisValues(LOCATION_LEFT,mLeft);
                                         mTop = (int) (mBottom - ((mRight - mLeft) / mFrameProportion + 0.5f));
                                         mTop = limitAxisValues(LOCATION_TOP,mTop);
                                         mLeft = (int) (mRight - ((mBottom - mTop) * mFrameProportion + 0.5f));
                                     }
-                                    mPreX = limitAxisValues(LOCATION_LEFT, (int) newX);
-                                    mPreY = limitAxisValues(LOCATION_TOP, (int) newY);
                                 }
                             }
                             break;
@@ -490,9 +493,13 @@ public class CropPictureView extends View {
         if (x <= mLeft + DEFAULT_DEVIATION_RANGE) {
             if (y <= mTop + DEFAULT_DEVIATION_RANGE) {
                 mButtonLeftTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
+                deviationX = (int) (mPreX-mLeft+0.5f);
+                deviationY = (int) (mPreY-mTop+0.5f);
                 return LOCATION_LEFT_TOP;
             } else if (y >= mBottom - DEFAULT_DEVIATION_RANGE) {
                 mButtonLeftBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
+                deviationX = (int) (mPreX-mLeft+0.5f);
+                deviationY = (int) (mPreY-mBottom+0.5f);
                 return LOCATION_LEFT_BOTTOM;
             } else if (y >= (mBottom + mTop) / 2 - DEFAULT_DEVIATION_RANGE && y <= (mBottom + mTop) / 2 + DEFAULT_DEVIATION_RANGE) {
                 mButtonLeftTargetScale = DEFAULT_BUTTON_SCALE_BIG;
@@ -505,9 +512,13 @@ public class CropPictureView extends View {
         } else if (x >= mRight - DEFAULT_DEVIATION_RANGE) {
             if (y <= mTop + DEFAULT_DEVIATION_RANGE) {
                 mButtonRightTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
+                deviationX = (int) (mPreX-mRight+0.5f);
+                deviationY = (int) (mPreY-mTop+0.5f);
                 return LOCATION_RIGHT_TOP;
             } else if (y >= mBottom - DEFAULT_DEVIATION_RANGE) {
                 mButtonRightBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
+                deviationX = (int) (mPreX-mRight+0.5f);
+                deviationY = (int) (mPreY-mBottom+0.5f);
                 return LOCATION_RIGHT_BOTTOM;
             } else if (y >= (mBottom + mTop) / 2 - DEFAULT_DEVIATION_RANGE && y <= (mBottom + mTop) / 2 + DEFAULT_DEVIATION_RANGE) {
                 mButtonRightTargetScale = DEFAULT_BUTTON_SCALE_BIG;
