@@ -1,4 +1,4 @@
-package com.example.administrator.myapplication.Util;
+package com.example.administrator.myapplication.util;
 
 import android.graphics.Bitmap;
 import android.graphics.Matrix;

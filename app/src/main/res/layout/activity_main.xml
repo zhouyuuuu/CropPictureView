@@ -3,7 +3,214 @@
     android:layout_width="match_parent"
     android:background="@mipmap/crop_picture_bg"
     android:layout_height="match_parent">
-    <com.example.administrator.myapplication.UI.CropPictureView
+
+    <HorizontalScrollView
+        android:scrollbars="none"
+        android:id="@+id/sv_proportion"
+        android:background="#ffffff"
+        android:layout_alignParentBottom="true"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:id="@+id/ll_proportion_freedom"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_freedom_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_freedom_b"/>
+                <TextView
+                    android:id="@+id/tv_proportion_freedom"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#578FFF"
+                    android:text = "@string/proportion_freedom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_proportion_1_1"
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_1_1_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_1_1_a"/>
+                <TextView
+                    android:id="@+id/tv_proportion_1_1"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#6C7074"
+                    android:text = "@string/proportion_1_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:id="@+id/ll_proportion_2_3"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_2_3_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_2_3_a"/>
+                <TextView
+                    android:id="@+id/tv_proportion_2_3"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#6C7074"
+                    android:text = "@string/proportion_2_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:id="@+id/ll_proportion_3_2"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_3_2_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_3_2_a"/>
+                <TextView
+                    android:id="@+id/tv_proportion_3_2"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#6C7074"
+                    android:text = "@string/proportion_3_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:id="@+id/ll_proportion_3_4"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_3_4_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_3_4_a"/>
+                <TextView
+                    android:id="@+id/tv_proportion_3_4"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#6C7074"
+                    android:text = "@string/proportion_3_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:id="@+id/ll_proportion_4_3"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_4_3_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_4_3_a"/>
+                <TextView
+                    android:id="@+id/tv_proportion_4_3"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#6C7074"
+                    android:text = "@string/proportion_4_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:id="@+id/ll_proportion_9_16"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_9_16_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_9_16_a"/>
+                <TextView
+                    android:id="@+id/tv_proportion_9_16"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#6C7074"
+                    android:text = "@string/proportion_9_16"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <LinearLayout
+                android:paddingTop="10dp"
+                android:paddingBottom="5dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:id="@+id/ll_proportion_16_9"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/tv_proportion_16_9_bg"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/edit_cut_crop_16_9_a"/>
+                <TextView
+                    android:id="@+id/tv_proportion_16_9"
+                    android:gravity="center"
+                    android:textSize="13sp"
+                    android:textColor="#6C7074"
+                    android:text = "@string/proportion_16_9"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </LinearLayout>
+    </HorizontalScrollView>
+    <com.example.administrator.myapplication.ui.CropPictureView
+        android:layout_above="@id/sv_proportion"
+        android:id="@+id/cpv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </RelativeLayout>
