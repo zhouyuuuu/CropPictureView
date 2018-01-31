@@ -11,11 +11,15 @@ import android.graphics.Path;
 import android.graphics.Region;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
 import com.example.administrator.myapplication.R;
 import com.example.administrator.myapplication.util.BitmapUtil;
 import com.example.administrator.myapplication.util.PixelUtil;
+
+import static android.content.ContentValues.TAG;
 
 //Created by Administrator on 2018/1/23.
 
@@ -194,7 +198,7 @@ public class CropPictureView extends View {
         switch (action & MotionEvent.ACTION_MASK) {
 
             case MotionEvent.ACTION_DOWN:
-                if (isInsideFrame(event.getX(),event.getY())) {
+                if (isInsideFrame(event.getX(), event.getY())) {
                     mMode = MODE_POINT_SINGLE;
                     mPreX = event.getX();
                     mPreY = event.getY();
@@ -204,7 +208,7 @@ public class CropPictureView extends View {
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:
-                if (isInsideFrame(event.getX(), event.getY()) && isInsideFrame(event.getX(1),event.getY(1))) {
+                if (isInsideFrame(event.getX(), event.getY()) && isInsideFrame(event.getX(1), event.getY(1))) {
                     mMode = MODE_POINT_DOUBLE;
                     float disX = Math.abs(event.getX(0) - event.getX(1));
                     float disY = Math.abs(event.getY(0) - event.getY(1));
@@ -230,21 +234,44 @@ public class CropPictureView extends View {
                         mTop = newTop;
                         mRight = newRight;
                         mBottom = newBottom;
+                        Log.e(TAG, "onTouchEvent1: " + scaleX + "  " + scaleY);
                         mPreLength = curLength;//当前间距已是之前间距
                     } else {
-                        if (newTop >= mMinY && newBottom <= mMaxY && newTop <= newBottom - mMinSize) {
-                            if (newLeft < mMinX) {
-                                scaleX = mLeft - mMinX;
-                                scaleY = scaleX / mFrameProportion;
-                            } else if (newLeft > newRight - mMinSize) {
-                                scaleX = -(mRight - mLeft - mMinSize) / 2;
-                                scaleY = scaleX / mFrameProportion;
-                            } else if (newRight > mMaxX) {
-                                scaleX = mMaxX - mRight;
-                                scaleY = scaleX / mFrameProportion;
+                        if ((newTop < mMinY || newBottom > mMaxY || newTop > newBottom - mMinSize) && (newLeft < mMinX || newRight > mMaxX || newLeft > newRight - mMinSize)) {
+                            if ((scaleX<0&&mFrameProportion<1)||(scaleX>=0&&mFrameProportion>=1)){
+                                if (newLeft < mMinX&&newRight>mMaxX){
+                                    scaleX = Math.min(mLeft - mMinX,mMaxX - mRight);
+                                    scaleY = scaleX / mFrameProportion;
+                                } else if (newLeft < mMinX) {
+                                    scaleX = mLeft - mMinX;
+                                    scaleY = scaleX / mFrameProportion;
+                                } else if (newLeft > newRight - mMinSize) {
+                                    scaleX = -(mRight - mLeft - mMinSize) / 2;
+                                    scaleY = scaleX / mFrameProportion;
+                                } else if (newRight > mMaxX) {
+                                    scaleX = mMaxX - mRight;
+                                    scaleY = scaleX / mFrameProportion;
+                                }
+                            }else {
+                                if (newTop < mMinY&&newBottom>mMaxY){
+                                    scaleY = Math.min(mTop - mMinY,mMaxY - mBottom);
+                                    scaleX = scaleY * mFrameProportion;
+                                } else if (newTop < mMinY) {
+                                    scaleY = mTop - mMinY;
+                                    scaleX = scaleY * mFrameProportion;
+                                } else if (newBottom > mMaxY) {
+                                    scaleY = mMaxY - mBottom;
+                                    scaleX = scaleY * mFrameProportion;
+                                } else if (newTop > newBottom - mMinSize) {
+                                    scaleY = -(mBottom - mTop - mMinSize) / 2;
+                                    scaleX = scaleY * mFrameProportion;
+                                }
                             }
-                        } else {
-                            if (newTop < mMinY) {
+                        }else if (newTop < mMinY || newBottom > mMaxY || newTop > newBottom - mMinSize) {
+                            if (newTop < mMinY&&newBottom>mMaxY){
+                                scaleY = Math.min(mTop - mMinY,mMaxY - mBottom);
+                                scaleX = scaleY * mFrameProportion;
+                            } else if (newTop < mMinY) {
                                 scaleY = mTop - mMinY;
                                 scaleX = scaleY * mFrameProportion;
                             } else if (newBottom > mMaxY) {
@@ -254,11 +281,26 @@ public class CropPictureView extends View {
                                 scaleY = -(mBottom - mTop - mMinSize) / 2;
                                 scaleX = scaleY * mFrameProportion;
                             }
+                        } else if(newLeft < mMinX || newRight > mMaxX || newLeft > newRight - mMinSize){
+                            if (newLeft < mMinX&&newRight>mMaxX){
+                                scaleX = Math.min(mLeft - mMinX,mMaxX - mRight);
+                                scaleY = scaleX / mFrameProportion;
+                            } else if (newLeft < mMinX) {
+                                scaleX = mLeft - mMinX;
+                                scaleY = scaleX / mFrameProportion;
+                            } else if (newLeft > newRight - mMinSize) {
+                                scaleX = -(mRight - mLeft - mMinSize) / 2;
+                                scaleY = scaleX / mFrameProportion;
+                            } else if (newRight > mMaxX) {
+                                scaleX = mMaxX - mRight;
+                                scaleY = scaleX / mFrameProportion;
+                            }
                         }
                         mRight += scaleX;
                         mLeft -= scaleX;
                         mTop -= scaleY;
                         mBottom += scaleY;
+                        Log.e(TAG, "onTouchEvent: " + scaleX + "  " + scaleY);
                         mPreLength = curLength;//当前间距已是之前间距
                     }
                 } else if (mMode == MODE_POINT_SINGLE) {//单点触控
@@ -409,7 +451,7 @@ public class CropPictureView extends View {
                                 mLeft = values[0];
                                 mPreX = values[1];
                                 newTop = mTop + offsetY;
-                                values = calculateBorderAxisValue(LOCATION_TOP, newTop,newY);
+                                values = calculateBorderAxisValue(LOCATION_TOP, newTop, newY);
                                 mTop = values[0];
                                 mPreY = values[1];
                             } else {
@@ -522,7 +564,7 @@ public class CropPictureView extends View {
         //还原画布状态
         canvas.restore();
         //显示像素
-        canvas.drawText((int)(mRight - mLeft + 0.5f) + "x" + (int)(mBottom - mTop + 0.5f), (mLeft + mRight) / 2, (mTop + mBottom) / 2 + mTextOffsetY, mPaintText);
+        canvas.drawText((int) (mRight - mLeft + 0.5f) + "x" + (int) (mBottom - mTop + 0.5f), (mLeft + mRight) / 2, (mTop + mBottom) / 2 + mTextOffsetY, mPaintText);
 
         //画分割线
         canvas.drawLine(mLeft, mTop, mLeft, mBottom, mPaint);
@@ -587,7 +629,7 @@ public class CropPictureView extends View {
     }
 
     /**
-     * wrapcontent和matchparent都填充满父布局，后面有需求可以再改
+     * wrap_content和match_parent都填充满父布局，后面有需求可以再改
      */
     public int getLength(int measureSpec) {
         int mode = MeasureSpec.getMode(measureSpec);
@@ -636,7 +678,7 @@ public class CropPictureView extends View {
                 mButtonLeftTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
                     mDeviationX = mPreX - mLeft;
-                    mDeviationY = mPreY - (mTop+mBottom)/2;
+                    mDeviationY = mPreY - (mTop + mBottom) / 2;
                     return LOCATION_LEFT;
                 } else {
                     return LOCATION_INSIDE;
@@ -657,7 +699,7 @@ public class CropPictureView extends View {
                 mButtonRightTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
                     mDeviationX = mPreX - mRight;
-                    mDeviationY = mPreY - (mTop+mBottom)/2;
+                    mDeviationY = mPreY - (mTop + mBottom) / 2;
                     return LOCATION_RIGHT;
                 } else {
                     return LOCATION_INSIDE;
@@ -667,7 +709,7 @@ public class CropPictureView extends View {
             if (x <= (mLeft + mRight) / 2 + DEFAULT_DEVIATION_RANGE && x >= (mLeft + mRight) / 2 - DEFAULT_DEVIATION_RANGE) {
                 mButtonTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
-                    mDeviationX = mPreX - (mLeft+mRight)/2;
+                    mDeviationX = mPreX - (mLeft + mRight) / 2;
                     mDeviationY = mPreY - mTop;
                     return LOCATION_TOP;
                 } else {
@@ -678,7 +720,7 @@ public class CropPictureView extends View {
             if (x <= (mLeft + mRight) / 2 + DEFAULT_DEVIATION_RANGE && x >= (mLeft + mRight) / 2 - DEFAULT_DEVIATION_RANGE) {
                 mButtonBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
-                    mDeviationX = mPreX - (mLeft+mRight)/2;
+                    mDeviationX = mPreX - (mLeft + mRight) / 2;
                     mDeviationY = mPreY - mBottom;
                     return LOCATION_BOTTOM;
                 } else {
