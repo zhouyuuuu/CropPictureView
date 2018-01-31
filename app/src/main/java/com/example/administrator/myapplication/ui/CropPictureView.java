@@ -105,8 +105,8 @@ public class CropPictureView extends View {
     private int mTextOffsetY;
 
     //触摸点偏差，如裁剪框右上角为（x,y），手指无法精准触摸到该点，因此给出偏差范围，并且记录下偏差deviationX与deviationY，以在移动时获得准确的触摸点偏移offset
-    private int deviationX;
-    private int deviationY;
+    private int mDeviationX;
+    private int mDeviationY;
 
     //这些成员变量用于改变裁剪框比例时的动画效果，如mTargetLeft是改变比例后的最终Left值，则mPageLeft为每一帧mLeft的偏移量，默认mPageLeft为(mTargetLeft-mLeft)/10,动画时间为10帧
     private int mTargetLeft;
@@ -289,8 +289,8 @@ public class CropPictureView extends View {
                                 mTop = values[0];
                                 mPreY = values[1];
                             } else {//比例模式时触摸点需与边界值比较后按比例进行缩放，如比例1：1，右下角（100，100），触摸点（101，102），则裁剪框右上角变为（101，101），即以X偏移量和Y偏移量中最小值作为裁剪框边界偏移量
-                                offsetToBorderX = (int) (newX - (mRight + deviationX));
-                                offsetToBorderY = (int) (newY - (mTop + deviationY));
+                                offsetToBorderX = (int) (newX - (mRight + mDeviationX));
+                                offsetToBorderY = (int) (newY - (mTop + mDeviationY));
                                 if (offsetToBorderX * offsetToBorderY < 0) {
                                     if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
                                         mTop = mTop + offsetToBorderY;
@@ -322,8 +322,8 @@ public class CropPictureView extends View {
                                 mBottom = values[0];
                                 mPreY = values[1];
                             } else {
-                                offsetToBorderX = (int) (newX - (mRight + deviationX));
-                                offsetToBorderY = (int) (newY - (mBottom + deviationY));
+                                offsetToBorderX = (int) (newX - (mRight + mDeviationX));
+                                offsetToBorderY = (int) (newY - (mBottom + mDeviationY));
                                 if (offsetToBorderX * offsetToBorderY > 0) {
                                     if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
                                         mBottom = mBottom + offsetToBorderY;
@@ -354,8 +354,8 @@ public class CropPictureView extends View {
                                 mBottom = values[0];
                                 mPreY = values[1];
                             } else {
-                                offsetToBorderX = (int) (newX - (mLeft + deviationX));
-                                offsetToBorderY = (int) (newY - (mBottom + deviationY));
+                                offsetToBorderX = (int) (newX - (mLeft + mDeviationX));
+                                offsetToBorderY = (int) (newY - (mBottom + mDeviationY));
                                 if (offsetToBorderX * offsetToBorderY < 0) {
                                     if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
                                         mBottom = mBottom + offsetToBorderY;
@@ -385,8 +385,8 @@ public class CropPictureView extends View {
                                 mTop = values[0];
                                 mPreY = values[1];
                             } else {
-                                offsetToBorderX = (int) (newX - (mLeft + deviationX));
-                                offsetToBorderY = (int) (newY - (mTop + deviationY));
+                                offsetToBorderX = (int) (newX - (mLeft + mDeviationX));
+                                offsetToBorderY = (int) (newY - (mTop + mDeviationY));
                                 if (offsetToBorderX * offsetToBorderY > 0) {
                                     if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
                                         mTop += offsetToBorderY;
@@ -596,13 +596,13 @@ public class CropPictureView extends View {
         if (x <= mLeft + DEFAULT_DEVIATION_RANGE) {
             if (y <= mTop + DEFAULT_DEVIATION_RANGE) {
                 mButtonLeftTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
-                deviationX = (int) (mPreX - mLeft + 0.5f);
-                deviationY = (int) (mPreY - mTop + 0.5f);
+                mDeviationX = (int) (mPreX - mLeft + 0.5f);
+                mDeviationY = (int) (mPreY - mTop + 0.5f);
                 return LOCATION_LEFT_TOP;
             } else if (y >= mBottom - DEFAULT_DEVIATION_RANGE) {
                 mButtonLeftBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
-                deviationX = (int) (mPreX - mLeft + 0.5f);
-                deviationY = (int) (mPreY - mBottom + 0.5f);
+                mDeviationX = (int) (mPreX - mLeft + 0.5f);
+                mDeviationY = (int) (mPreY - mBottom + 0.5f);
                 return LOCATION_LEFT_BOTTOM;
             } else if (y >= (mBottom + mTop) / 2 - DEFAULT_DEVIATION_RANGE && y <= (mBottom + mTop) / 2 + DEFAULT_DEVIATION_RANGE) {
                 mButtonLeftTargetScale = DEFAULT_BUTTON_SCALE_BIG;
@@ -615,13 +615,13 @@ public class CropPictureView extends View {
         } else if (x >= mRight - DEFAULT_DEVIATION_RANGE) {
             if (y <= mTop + DEFAULT_DEVIATION_RANGE) {
                 mButtonRightTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
-                deviationX = (int) (mPreX - mRight + 0.5f);
-                deviationY = (int) (mPreY - mTop + 0.5f);
+                mDeviationX = (int) (mPreX - mRight + 0.5f);
+                mDeviationY = (int) (mPreY - mTop + 0.5f);
                 return LOCATION_RIGHT_TOP;
             } else if (y >= mBottom - DEFAULT_DEVIATION_RANGE) {
                 mButtonRightBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
-                deviationX = (int) (mPreX - mRight + 0.5f);
-                deviationY = (int) (mPreY - mBottom + 0.5f);
+                mDeviationX = (int) (mPreX - mRight + 0.5f);
+                mDeviationY = (int) (mPreY - mBottom + 0.5f);
                 return LOCATION_RIGHT_BOTTOM;
             } else if (y >= (mBottom + mTop) / 2 - DEFAULT_DEVIATION_RANGE && y <= (mBottom + mTop) / 2 + DEFAULT_DEVIATION_RANGE) {
                 mButtonRightTargetScale = DEFAULT_BUTTON_SCALE_BIG;
