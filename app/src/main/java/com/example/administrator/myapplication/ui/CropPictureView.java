@@ -11,12 +11,15 @@ import android.graphics.Path;
 import android.graphics.Region;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.example.administrator.myapplication.R;
 import com.example.administrator.myapplication.util.BitmapUtil;
 import com.example.administrator.myapplication.util.PixelUtil;
+
+import static android.content.ContentValues.TAG;
 
 //Created by Administrator on 2018/1/23.
 
@@ -221,16 +224,52 @@ public class CropPictureView extends View {
                     float curLength = (float) Math.sqrt(disX * disX + disY * disY);
                     //当前间距和之前间距相减除以2，因为left+scale和right+scale，宽度扩大2*scale=间距之差
                     float scaleX = (curLength - mPreLength) / 2;
-                    float scaleY = scaleX/mFrameProportion;
+                    float scaleY = scaleX / mFrameProportion;
                     int newLeft = (int) (mLeft - scaleX + 0.5f);//注意四舍五入
                     int newTop = (int) (mTop - scaleY + 0.5f);
                     int newRight = (int) (mRight + scaleX + 0.5f);
                     int newBottom = (int) (mBottom + scaleY + 0.5f);
-                    if ((scaleX > 0 && newLeft > mMinX && newRight < mMaxX && newTop > mMinY && newBottom < mMaxY) || (scaleX <= 0 && newLeft < newRight - mMinSize && newTop < newBottom - mMinSize)) {
+                    if ((scaleX > 0 && newLeft >= mMinX && newRight <= mMaxX && newTop >= mMinY && newBottom <= mMaxY) || (scaleX < 0 && newLeft <= newRight - mMinSize && newTop <= newBottom - mMinSize)) {
                         mLeft = newLeft;
                         mTop = newTop;
                         mRight = newRight;
                         mBottom = newBottom;
+                        mPreLength = curLength;//当前间距已是之前间距
+                    } else {
+                        if (newTop >= mMinY && newBottom <= mMaxY && newTop <= newBottom - mMinSize) {
+                            if (newLeft < mMinX) {
+                                Log.e(TAG, "onTouchEvent: 1");
+                                scaleX = mLeft - mMinX;
+                                scaleY = scaleX / mFrameProportion;
+                            } else if (newLeft > newRight - mMinSize) {
+                                Log.e(TAG, "onTouchEvent: 2");
+                                scaleX = -(mRight - mLeft - mMinSize) / 2;
+                                scaleY = scaleX / mFrameProportion;
+                            } else if (newRight > mMaxX) {
+                                Log.e(TAG, "onTouchEvent: 3");
+                                scaleX = mMaxX - mRight;
+                                scaleY = scaleX / mFrameProportion;
+                            }
+                        } else {
+                            if (newTop < mMinY) {
+                                Log.e(TAG, "onTouchEvent: 4");
+                                scaleY = mTop - mMinY;
+                                scaleX = scaleY * mFrameProportion;
+                            } else if (newBottom > mMaxY) {
+                                Log.e(TAG, "onTouchEvent: 5");
+                                scaleY = mMaxY - mBottom;
+                                scaleX = scaleY * mFrameProportion;
+                            } else if (newTop > newBottom - mMinSize) {
+                                Log.e(TAG, "onTouchEvent: 6");
+                                scaleY = -(mBottom - mTop - mMinSize) / 2;
+                                scaleX = scaleY * mFrameProportion;
+                            }
+                        }
+                        mRight += scaleX;
+                        mLeft -= scaleX;
+                        mTop -= scaleY;
+                        mBottom += scaleY;
+                        Log.e(TAG, "onTouchEvent: left  " + mLeft + "  Right  " + mRight + "  top  " + mTop + "  Bottom  " + mBottom);
                         mPreLength = curLength;//当前间距已是之前间距
                     }
                 } else if (mMode == MODE_POINT_SINGLE) {//单点触控
@@ -328,15 +367,15 @@ public class CropPictureView extends View {
                                     if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
                                         mBottom = mBottom + offsetToBorderY;
                                         mBottom = limitAxisValues(LOCATION_BOTTOM, mBottom);
-                                        mRight = (int) (mLeft + (mBottom - mTop) * mFrameProportion+0.5f);
+                                        mRight = (int) (mLeft + (mBottom - mTop) * mFrameProportion + 0.5f);
                                         mRight = limitAxisValues(LOCATION_RIGHT, mRight);
-                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion+0.5f);
+                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                     } else {
                                         mRight = mRight + offsetToBorderX;
                                         mRight = limitAxisValues(LOCATION_RIGHT, mRight);
-                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion+0.5f);
+                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                         mBottom = limitAxisValues(LOCATION_BOTTOM, mBottom);
-                                        mRight = (int) (mLeft + (mBottom - mTop) * mFrameProportion+0.5f);
+                                        mRight = (int) (mLeft + (mBottom - mTop) * mFrameProportion + 0.5f);
                                     }
                                 }
                             }
@@ -360,15 +399,15 @@ public class CropPictureView extends View {
                                     if (Math.abs(offsetToBorderY) < Math.abs(offsetToBorderX)) {
                                         mBottom = mBottom + offsetToBorderY;
                                         mBottom = limitAxisValues(LOCATION_BOTTOM, mBottom);
-                                        mLeft = (int) (mRight - (mBottom - mTop) * mFrameProportion+0.5f);
+                                        mLeft = (int) (mRight - (mBottom - mTop) * mFrameProportion + 0.5f);
                                         mLeft = limitAxisValues(LOCATION_LEFT, mLeft);
-                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion+0.5f);
+                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                     } else {
                                         mLeft = mLeft + offsetToBorderX;
                                         mLeft = limitAxisValues(LOCATION_LEFT, mLeft);
-                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion+0.5f);
+                                        mBottom = (int) (mTop + (mRight - mLeft) / mFrameProportion + 0.5f);
                                         mBottom = limitAxisValues(LOCATION_BOTTOM, mBottom);
-                                        mLeft = (int) (mRight - (mBottom - mTop) * mFrameProportion+0.5f);
+                                        mLeft = (int) (mRight - (mBottom - mTop) * mFrameProportion + 0.5f);
                                     }
                                 }
                             }
