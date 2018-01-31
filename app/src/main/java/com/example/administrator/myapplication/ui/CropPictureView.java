@@ -275,8 +275,8 @@ public class CropPictureView extends View {
                 } else if (mMode == MODE_POINT_SINGLE) {//单点触控
                     float newX = event.getX();
                     float newY = event.getY();
-                    int offsetX = (int) (newX - mPreX + 0.5f);
-                    int offsetY = (int) (newY - mPreY + 0.5f);
+                    int offsetX = (int) (newX - mPreX);
+                    int offsetY = (int) (newY - mPreY);
                     int newRight;
                     int newBottom;
                     int newLeft;
@@ -287,32 +287,33 @@ public class CropPictureView extends View {
 
                         case LOCATION_TOP:
                             newTop = mTop + offsetY;
-                            int[] values = calculateBorderAxisValue(LOCATION_TOP, newTop, (int) newY);//计算newTop和mPreY，接近限制值（mMinY、mMaxY）时,newTop需要进行限制，且mPreY需要进行判断赋值以获得更好的用户体验，其他边界同理。
-                            mTop = values[0];
+                            float[] values = calculateBorderAxisValue(LOCATION_TOP, newTop, newY);//计算newTop和mPreY，接近限制值（mMinY、mMaxY）时,newTop需要进行限制，且mPreY需要进行判断赋值以获得更好的用户体验，其他边界同理。
+                            mTop = (int) values[0];
                             mPreY = values[1];
                             mPreX = newX;
                             break;
 
                         case LOCATION_RIGHT:
                             newRight = mRight + offsetX;
-                            values = calculateBorderAxisValue(LOCATION_RIGHT, newRight, (int) newX);
-                            mRight = values[0];
+                            values = calculateBorderAxisValue(LOCATION_RIGHT, newRight, newX);
+                            mRight = (int) values[0];
                             mPreX = values[1];
+                            Log.e(TAG, "onTouchEvent: "+mRight+" "+mPreX+" "+newX);
                             mPreY = newY;
                             break;
 
                         case LOCATION_BOTTOM:
                             newBottom = mBottom + offsetY;
-                            values = calculateBorderAxisValue(LOCATION_BOTTOM, newBottom, (int) newY);
-                            mBottom = values[0];
+                            values = calculateBorderAxisValue(LOCATION_BOTTOM, newBottom, newY);
+                            mBottom = (int) values[0];
                             mPreY = values[1];
                             mPreX = newX;
                             break;
 
                         case LOCATION_LEFT:
                             newLeft = mLeft + offsetX;
-                            values = calculateBorderAxisValue(LOCATION_LEFT, newLeft, (int) newX);
-                            mLeft = values[0];
+                            values = calculateBorderAxisValue(LOCATION_LEFT, newLeft, newX);
+                            mLeft = (int) values[0];
                             mPreX = values[1];
                             mPreY = newY;
                             break;
@@ -320,12 +321,12 @@ public class CropPictureView extends View {
                         case LOCATION_RIGHT_TOP:
                             if (mIsProportionFreedom) {//自由模式时角落跟随触摸点移动即可
                                 newRight = mRight + offsetX;
-                                values = calculateBorderAxisValue(LOCATION_RIGHT, newRight, (int) newX);
-                                mRight = values[0];
+                                values = calculateBorderAxisValue(LOCATION_RIGHT, newRight, newX);
+                                mRight = (int) values[0];
                                 mPreX = values[1];
                                 newTop = mTop + offsetY;
-                                values = calculateBorderAxisValue(LOCATION_TOP, newTop, (int) newY);
-                                mTop = values[0];
+                                values = calculateBorderAxisValue(LOCATION_TOP, newTop, newY);
+                                mTop = (int) values[0];
                                 mPreY = values[1];
                             } else {//比例模式时触摸点需与边界值比较后按比例进行缩放，如比例1：1，右下角（100，100），触摸点（101，102），则裁剪框右上角变为（101，101），即以X偏移量和Y偏移量中最小值作为裁剪框边界偏移量
                                 offsetToBorderX = (int) (newX - (mRight + mDeviationX));
@@ -353,12 +354,12 @@ public class CropPictureView extends View {
                         case LOCATION_RIGHT_BOTTOM:
                             if (mIsProportionFreedom) {
                                 newRight = mRight + offsetX;
-                                values = calculateBorderAxisValue(LOCATION_RIGHT, newRight, (int) newX);
-                                mRight = values[0];
+                                values = calculateBorderAxisValue(LOCATION_RIGHT, newRight, newX);
+                                mRight = (int) values[0];
                                 mPreX = values[1];
                                 newBottom = mBottom + offsetY;
-                                values = calculateBorderAxisValue(LOCATION_BOTTOM, newBottom, (int) newY);
-                                mBottom = values[0];
+                                values = calculateBorderAxisValue(LOCATION_BOTTOM, newBottom, newY);
+                                mBottom = (int) values[0];
                                 mPreY = values[1];
                             } else {
                                 offsetToBorderX = (int) (newX - (mRight + mDeviationX));
@@ -385,12 +386,12 @@ public class CropPictureView extends View {
                         case LOCATION_LEFT_BOTTOM:
                             if (mIsProportionFreedom) {
                                 newLeft = mLeft + offsetX;
-                                values = calculateBorderAxisValue(LOCATION_LEFT, newLeft, (int) newX);
-                                mLeft = values[0];
+                                values = calculateBorderAxisValue(LOCATION_LEFT, newLeft, newX);
+                                mLeft = (int) values[0];
                                 mPreX = values[1];
                                 newBottom = mBottom + offsetY;
-                                values = calculateBorderAxisValue(LOCATION_BOTTOM, newBottom, (int) newY);
-                                mBottom = values[0];
+                                values = calculateBorderAxisValue(LOCATION_BOTTOM, newBottom, newY);
+                                mBottom = (int) values[0];
                                 mPreY = values[1];
                             } else {
                                 offsetToBorderX = (int) (newX - (mLeft + mDeviationX));
@@ -416,12 +417,12 @@ public class CropPictureView extends View {
                         case LOCATION_LEFT_TOP:
                             if (mIsProportionFreedom) {
                                 newLeft = mLeft + offsetX;
-                                values = calculateBorderAxisValue(LOCATION_LEFT, newLeft, (int) newX);
-                                mLeft = values[0];
+                                values = calculateBorderAxisValue(LOCATION_LEFT, newLeft, newX);
+                                mLeft = (int) values[0];
                                 mPreX = values[1];
                                 newTop = mTop + offsetY;
-                                values = calculateBorderAxisValue(LOCATION_TOP, newTop, (int) newY);
-                                mTop = values[0];
+                                values = calculateBorderAxisValue(LOCATION_TOP, newTop,newY);
+                                mTop = (int) values[0];
                                 mPreY = values[1];
                             } else {
                                 offsetToBorderX = (int) (newX - (mLeft + mDeviationX));
@@ -646,6 +647,8 @@ public class CropPictureView extends View {
             } else if (y >= (mBottom + mTop) / 2 - DEFAULT_DEVIATION_RANGE && y <= (mBottom + mTop) / 2 + DEFAULT_DEVIATION_RANGE) {
                 mButtonLeftTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
+                    mDeviationX = (int) (mPreX - mLeft + 0.5f);
+                    mDeviationY = (int) (mPreY - (mTop+mBottom)/2 + 0.5f);
                     return LOCATION_LEFT;
                 } else {
                     return LOCATION_INSIDE;
@@ -665,6 +668,8 @@ public class CropPictureView extends View {
             } else if (y >= (mBottom + mTop) / 2 - DEFAULT_DEVIATION_RANGE && y <= (mBottom + mTop) / 2 + DEFAULT_DEVIATION_RANGE) {
                 mButtonRightTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
+                    mDeviationX = (int) (mPreX - mRight + 0.5f);
+                    mDeviationY = (int) (mPreY - (mTop+mBottom)/2 + 0.5f);
                     return LOCATION_RIGHT;
                 } else {
                     return LOCATION_INSIDE;
@@ -674,6 +679,8 @@ public class CropPictureView extends View {
             if (x <= (mLeft + mRight) / 2 + DEFAULT_DEVIATION_RANGE && x >= (mLeft + mRight) / 2 - DEFAULT_DEVIATION_RANGE) {
                 mButtonTopTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
+                    mDeviationX = (int) (mPreX - (mLeft+mRight)/2 + 0.5f);
+                    mDeviationY = (int) (mPreY - mTop + 0.5f);
                     return LOCATION_TOP;
                 } else {
                     return LOCATION_INSIDE;
@@ -683,6 +690,8 @@ public class CropPictureView extends View {
             if (x <= (mLeft + mRight) / 2 + DEFAULT_DEVIATION_RANGE && x >= (mLeft + mRight) / 2 - DEFAULT_DEVIATION_RANGE) {
                 mButtonBottomTargetScale = DEFAULT_BUTTON_SCALE_BIG;
                 if (mIsProportionFreedom) {
+                    mDeviationX = (int) (mPreX - (mLeft+mRight)/2 + 0.5f);
+                    mDeviationY = (int) (mPreY - mBottom + 0.5f);
                     return LOCATION_BOTTOM;
                 } else {
                     return LOCATION_INSIDE;
@@ -733,8 +742,8 @@ public class CropPictureView extends View {
      * @param fingerAxisValue
      * @return
      */
-    private int[] calculateBorderAxisValue(int location, int borderAxisValue, int fingerAxisValue) {
-        int[] result = new int[2];
+    private float[] calculateBorderAxisValue(int location, int borderAxisValue, float fingerAxisValue) {
+        float[] result = new float[2];
         int minValue = 0;
         int maxValue = 0;
         switch (location) {
