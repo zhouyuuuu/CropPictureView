@@ -11,15 +11,11 @@ import android.graphics.Path;
 import android.graphics.Region;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-
 import com.example.administrator.myapplication.R;
 import com.example.administrator.myapplication.util.BitmapUtil;
 import com.example.administrator.myapplication.util.PixelUtil;
-
-import static android.content.ContentValues.TAG;
 
 //Created by Administrator on 2018/1/23.
 
@@ -234,7 +230,6 @@ public class CropPictureView extends View {
                         mTop = newTop;
                         mRight = newRight;
                         mBottom = newBottom;
-                        Log.e(TAG, "onTouchEvent1: " + scaleX + "  " + scaleY);
                         mPreLength = curLength;//当前间距已是之前间距
                     } else {
                         if ((newTop < mMinY || newBottom > mMaxY || newTop > newBottom - mMinSize) && (newLeft < mMinX || newRight > mMaxX || newLeft > newRight - mMinSize)) {
@@ -267,7 +262,6 @@ public class CropPictureView extends View {
                                     scaleX = scaleY * mFrameProportion;
                                 }
                             }
-                            Log.e(TAG, "onTouchEvent:11 " + scaleX + "  " + scaleY);
                         }else if (newTop < mMinY || newBottom > mMaxY || newTop > newBottom - mMinSize) {
                             if (newTop < mMinY&&newBottom>mMaxY){
                                 scaleY = Math.min(mTop - mMinY,mMaxY - mBottom);
@@ -282,7 +276,6 @@ public class CropPictureView extends View {
                                 scaleY = -(mBottom - mTop - mMinSize) / 2;
                                 scaleX = scaleY * mFrameProportion;
                             }
-                            Log.e(TAG, "onTouchEvent22: " + scaleX + "  " + scaleY);
                         } else if(newLeft < mMinX || newRight > mMaxX || newLeft > newRight - mMinSize){
                             if (newLeft < mMinX&&newRight>mMaxX){
                                 scaleX = Math.min(mLeft - mMinX,mMaxX - mRight);
@@ -297,7 +290,6 @@ public class CropPictureView extends View {
                                 scaleX = mMaxX - mRight;
                                 scaleY = scaleX / mFrameProportion;
                             }
-                            Log.e(TAG, "onTouchEvent33: " + scaleX + "  " + scaleY);
                         }
                         mRight += scaleX;
                         mLeft -= scaleX;
