@@ -238,7 +238,7 @@ public class CropPictureView extends View {
                         mPreLength = curLength;//当前间距已是之前间距
                     } else {
                         if ((newTop < mMinY || newBottom > mMaxY || newTop > newBottom - mMinSize) && (newLeft < mMinX || newRight > mMaxX || newLeft > newRight - mMinSize)) {
-                            if ((scaleX<0&&mFrameProportion<1)||(scaleX>=0&&mFrameProportion>=1)){
+                            if ((scaleX<0&&mFrameProportion<(mMaxX-mMinX)/(mMaxY-mMinY))||(scaleX>=0&&mFrameProportion>=(mMaxX-mMinX)/(mMaxY-mMinY))){
                                 if (newLeft < mMinX&&newRight>mMaxX){
                                     scaleX = Math.min(mLeft - mMinX,mMaxX - mRight);
                                     scaleY = scaleX / mFrameProportion;
@@ -267,6 +267,7 @@ public class CropPictureView extends View {
                                     scaleX = scaleY * mFrameProportion;
                                 }
                             }
+                            Log.e(TAG, "onTouchEvent:11 " + scaleX + "  " + scaleY);
                         }else if (newTop < mMinY || newBottom > mMaxY || newTop > newBottom - mMinSize) {
                             if (newTop < mMinY&&newBottom>mMaxY){
                                 scaleY = Math.min(mTop - mMinY,mMaxY - mBottom);
@@ -281,6 +282,7 @@ public class CropPictureView extends View {
                                 scaleY = -(mBottom - mTop - mMinSize) / 2;
                                 scaleX = scaleY * mFrameProportion;
                             }
+                            Log.e(TAG, "onTouchEvent22: " + scaleX + "  " + scaleY);
                         } else if(newLeft < mMinX || newRight > mMaxX || newLeft > newRight - mMinSize){
                             if (newLeft < mMinX&&newRight>mMaxX){
                                 scaleX = Math.min(mLeft - mMinX,mMaxX - mRight);
@@ -295,12 +297,13 @@ public class CropPictureView extends View {
                                 scaleX = mMaxX - mRight;
                                 scaleY = scaleX / mFrameProportion;
                             }
+                            Log.e(TAG, "onTouchEvent33: " + scaleX + "  " + scaleY);
                         }
                         mRight += scaleX;
                         mLeft -= scaleX;
                         mTop -= scaleY;
                         mBottom += scaleY;
-                        Log.e(TAG, "onTouchEvent: " + scaleX + "  " + scaleY);
+
                         mPreLength = curLength;//当前间距已是之前间距
                     }
                 } else if (mMode == MODE_POINT_SINGLE) {//单点触控
